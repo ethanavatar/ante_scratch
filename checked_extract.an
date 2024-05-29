@@ -1,0 +1,7 @@
+trait CheckedExtract collection index -> element with
+    checked_extract: collection - index -> Maybe element
+
+impl CheckedExtract (String) (Usz) (Char) with
+    checked_extract string index =
+        if index >= string.length then None
+        Some (string#index)

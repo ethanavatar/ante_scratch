@@ -1,0 +1,57 @@
+// lol. underscores are preserved in module imports
+import Checked_Extract
+
+hello: String = "Hello, Sailor!"
+print <| hello#1usz
+print <| substring hello 7 14
+print <| reverse hello
+
+reverse (s: String): String =
+    reversed = mut malloc (s.length + 1)
+    loop (i = s.length) ->
+        if i > 0 then
+            array_insert (@reversed) (s.length - i) (s#(i - 1))
+            recur (i - 1)
+
+    /*
+    // Bug? typechecker panic: cannot unify polytype
+    loop (i = 0) ->
+        match checked_extract s i
+        | Some c ->
+            array_insert (@reversed) i c
+            recur (i + 1)
+        | None -> ()
+    */
+
+    array_insert (@reversed) s.length '\0'
+    String (@reversed) s.length
+
+substring (s: String) (from: Usz) (to: Usz): Maybe String =
+    if to > s.length then None
+    if from > to then None
+    if from >= s.length then None
+    if from == to then Some (s#from)
+
+    length = to - from
+    buffer = mut malloc (length + 1)
+    array_insert (@buffer) length '\0'
+
+    /*
+    // Bug?: parser expects a probably incorrect unindent
+    // Then panics when you give it one
+    for (from..to) fn i ->
+        array_insert (@buffer) (i - from) (s#i)
+    */
+
+    /*
+    // Bug?: shadowing causes codegen panic
+    // something like "v64 has not been compiled yet"
+    source = (transmute s.c_string) + from
+    source = transmute source
+    memcpy (@buffer) source length
+    */
+
+    source = transmute ((transmute s.c_string) + from)
+    memcpy (@buffer) source length
+
+    Some (String (@buffer) length)
